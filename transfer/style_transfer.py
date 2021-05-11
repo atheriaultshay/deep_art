@@ -22,7 +22,6 @@ import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# desired size of the output image
 #imsize = 512 if torch.cuda.is_available() else 128  # use small size if no gpu
 imsize = 512
 
@@ -111,8 +110,8 @@ class Normalization(nn.Module):
         # normalize img
         return (img - self.mean) / self.std
 
-content_layers_default = ['conv_15']
-style_layers_default = ['conv_1', 'conv_3', 'conv_4', 'conv_9']
+content_layers_default = ['conv_5']
+style_layers_default = ['conv_1','conv_2', 'conv_3', 'conv_4']
 
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
                                style_img, content_img,
@@ -241,13 +240,18 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
     return input_img
 
+def center_crop(img,size=512):
+    x_center = int(img.shape[2] / 2.0)
+    y_center = int(img.shape[3] / 2.0)
+    return(img[:,:,x_center-int(size/2):x_center+int(size/2),y_center-int(size/2):y_center+int(size/2)])
+
 
 
 def main():
 	plt.ion()
 
-	style_img = image_loader("./vangogh.jpg")[:,:,:,455-256:455+256]
-	content_img = image_loader("./draghi_512.jpg")[:,:,:512,:]
+	style_img = center_crop(image_loader("./styles/mandlebrot.jpg"))
+	content_img = center_crop(image_loader("./nyc/nyc_night.jpg"))
 
 	assert style_img.size() == content_img.size(), \
 	    "we need to import style and content images of the same size"
@@ -262,10 +266,10 @@ def main():
 	cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
 
 	# desired depth layers to compute style/content losses :
-	content_layers = ['conv_15']
-	style_layers = ['conv_1','conv_3', 'conv_4','conv_9']# 1, 3, 4, 9, are good
+	content_layers = ['conv_5']
+	style_layers = ['conv_1','conv_2','conv_3', 'conv_4']# 1, 3, 4, 9, are good
 
-	preserve_colors = True
+	preserve_colors = False
 
 	#input_img = content_img.clone()
 
@@ -310,7 +314,7 @@ def main():
 
 	output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
                             content_img, style_img, input_img=input_img, content_layers = content_layers,style_layers = style_layers,
-                            num_steps=3e4,style_weight=1e4)
+                            num_steps=3e4,style_weight=1e6)
 
 	plt.figure()
 	imshow(output, title='Output Image')
