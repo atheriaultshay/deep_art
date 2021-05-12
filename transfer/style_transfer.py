@@ -95,7 +95,6 @@ class StyleLoss(nn.Module):
 
 
 
-# create a module to normalize input image so we can easily put it in a
 # nn.Sequential
 class Normalization(nn.Module):
     def __init__(self, mean, std):
@@ -110,13 +109,11 @@ class Normalization(nn.Module):
         # normalize img
         return (img - self.mean) / self.std
 
-content_layers_default = ['conv_5']
-style_layers_default = ['conv_1','conv_2', 'conv_3', 'conv_4']
 
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
                                style_img, content_img,
-                               content_layers=content_layers_default,
-                               style_layers=style_layers_default):
+                               content_layers=['conv_5'],
+                               style_layers=['conv_1','conv_2', 'conv_3', 'conv_4']):
     cnn = copy.deepcopy(cnn)
 
     # normalization module
@@ -187,9 +184,10 @@ def get_input_optimizer(input_img):
     return optimizer
 
 
+
 def run_style_transfer(cnn, normalization_mean, normalization_std,
                        content_img, style_img, input_img, num_steps=300,
-                       style_weight=1000000, content_weight=1,content_layers=content_layers_default,style_layers=style_layers_default):
+                       style_weight=1000000, content_weight=1,content_layers=['conv_5'],style_layers=['conv_1','conv_3','conv_4']):
     """Run the style transfer."""
     print('Building the style transfer model..')
     model, style_losses, content_losses = get_style_model_and_losses(cnn,
@@ -250,8 +248,8 @@ def center_crop(img,size=512):
 def main():
 	plt.ion()
 
-	style_img = center_crop(image_loader("./styles/mandlebrot.jpg"))
-	content_img = center_crop(image_loader("./nyc/nyc_night.jpg"))
+	style_img = center_crop(image_loader("./styles/cubism.jpg"))
+	content_img = center_crop(image_loader("./draghi/draghi_512.jpg"))
 
 	assert style_img.size() == content_img.size(), \
 	    "we need to import style and content images of the same size"
@@ -266,8 +264,8 @@ def main():
 	cnn_normalization_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
 
 	# desired depth layers to compute style/content losses :
-	content_layers = ['conv_5']
-	style_layers = ['conv_1','conv_2','conv_3', 'conv_4']# 1, 3, 4, 9, are good
+	content_layers = ['conv_16']
+	style_layers = ['conv_1','conv_3','conv_9','conv_15']# 1, 3, 4, 9, are good
 
 	preserve_colors = False
 
